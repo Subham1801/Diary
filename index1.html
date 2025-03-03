@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Write It</title>
   <!-- Include Supabase library from a CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="supabase.js"></script>
   <style>
     /* Global Styles */
     * { 
@@ -449,6 +447,52 @@
 
     // Initial render
     renderCalendar();
+
+    // Replace the calendar script with:
+
+<script>
+  const EVENTS_KEY = 'calendar_events';
+  let events = JSON.parse(localStorage.getItem(EVENTS_KEY)) || [];
+
+  // Event Handling
+  function saveEvent() {
+    const newEvent = {
+      id: Date.now().toString(),
+      year: parseInt(document.getElementById('eventYear').value),
+      month: parseInt(document.getElementById('eventMonth').value),
+      day: parseInt(document.getElementById('eventDay').value),
+      title: document.getElementById('eventTitle').value.trim(),
+      forever: document.getElementById('eventForever').checked
+    };
+
+    events.push(newEvent);
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    renderCalendar();
+    closeEventModal();
+    alert('Event saved!');
+  }
+
+  // Update renderCalendar function
+  function renderCalendar() {
+    // Existing calendar rendering code
+    
+    // Add events
+    events.forEach(event => {
+      if (event.year === currentYear && event.month === currentMonth + 1) {
+        const dayCell = calendarGrid.children[firstDay + event.day - 1];
+        if (dayCell) {
+          const dot = document.createElement('div');
+          dot.className = 'event-dot';
+          const tooltip = document.createElement('div');
+          tooltip.className = 'tooltip';
+          tooltip.textContent = event.title;
+          dayCell.appendChild(dot);
+          dayCell.appendChild(tooltip);
+        }
+      }
+    });
+  }
+</script>
   </script>
 </body>
 </html>

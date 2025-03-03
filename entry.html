@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Write It</title>
   <!-- Include Supabase library from a CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="supabase.js"></script>
 
   <style>
     /* Global Reset & Base Styles */
@@ -308,6 +306,64 @@
       alert("Emojis saved!");
       closeEmojiModal();
     }
+
+    // Replace the script section with:
+
+<script>
+  const ENTRIES_KEY = 'diary_entries';
+  let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY)) || [];
+  
+  // URL Parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const entryId = urlParams.get('id');
+  const year = urlParams.get('year');
+  const month = urlParams.get('month');
+  const day = urlParams.get('day');
+  const currentDate = `${year}-${month}-${day}`;
+  const isEditMode = !!entryId;
+
+  // Entry Data Handling
+  let currentEntry = isEditMode ? 
+    entries.find(e => e.id === entryId) : 
+    { id: Date.now().toString(), date: currentDate, title: '', content: '', emojis: '' };
+
+  // Initialize Form
+  document.getElementById('entryTitle').value = currentEntry.title;
+  document.getElementById('entryContent').value = currentEntry.content;
+  document.getElementById('deleteBtn').style.display = isEditMode ? 'block' : 'none';
+  document.getElementById('pageTitle').textContent = isEditMode ? "Edit Entry" : "New Entry";
+
+  // Save Entry
+  function saveEntry() {
+    currentEntry.title = document.getElementById('entryTitle').value.trim();
+    currentEntry.content = document.getElementById('entryContent').value.trim();
+    currentEntry.emojis = document.getElementById('emojiInput').value.trim();
+
+    if (!currentEntry.title || !currentEntry.content) {
+      alert("Please fill out both title and content");
+      return;
+    }
+
+    if (!isEditMode) {
+      entries.push(currentEntry);
+    }
+    
+    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+    alert(`Entry ${isEditMode ? 'updated' : 'created'} successfully!`);
+    goBack();
+  }
+
+  // Delete Entry
+  function deleteEntry() {
+    if (confirm("Are you sure?")) {
+      entries = entries.filter(e => e.id !== entryId);
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+      alert("Entry deleted!");
+      goBack();
+    }
+  }
+  // Keep emoji modal functions
+</script>
   </script>
 </body>
 </html>

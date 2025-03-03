@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Write It</title>
   <!-- Include Supabase library from a CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="supabase.js"></script>
   <style>
     /* Global Styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,98 +192,56 @@
   <!-- New Entry Button -->
   <button class="new-entry-btn" onclick="createNewEntry()">+</button>
 
-  <script>
-    // --- Date Parsing & Display ---
-    // Example: date.html?year=2025&month=07&day=15
-    const urlParams = new URLSearchParams(window.location.search);
-    let year = urlParams.get('year') || new Date().getFullYear();
-    let month = urlParams.get('month') || (new Date().getMonth() + 1);
-    let day = urlParams.get('day') || new Date().getDate();
+// Replace the entire script section with:
 
-    // Display the day as a big, aesthetic number
+<script>
+  // LocalStorage Keys
+  const ENTRIES_KEY = 'diary_entries';
+  
+  // Date Handling
+  const urlParams = new URLSearchParams(window.location.search);
+  let year = urlParams.get('year') || new Date().getFullYear();
+  let month = urlParams.get('month') || (new Date().getMonth() + 1);
+  let day = urlParams.get('day') || new Date().getDate();
+  const currentDate = `${year}-${month}-${day}`;
+
+  // Display Date
+  document.getElementById('dateTitle').textContent = day.toString().padStart(2, '0');
+
+  // Load Entries
+  function loadEntries() {
+    const entries = JSON.parse(localStorage.getItem(ENTRIES_KEY)) || [];
+    return entries.filter(entry => entry.date === currentDate);
+  }
+
+  // Render Entries
+  function renderEntries() {
+    const entriesTab = document.getElementById('entriesTab');
+    entriesTab.innerHTML = '';
+    
+    loadEntries().forEach(entry => {
+      const entryHTML = `
+        <div class="entry-box" onclick="openModal('${entry.title}')">
+          <div class="entry-title">${entry.title}</div>
+        </div>
+      `;
+      entriesTab.innerHTML += entryHTML;
+    });
+  }
+
+  // Update Date Function
+  function updateDate(dateObj) {
+    year = dateObj.getFullYear();
+    month = dateObj.getMonth() + 1;
+    day = dateObj.getDate();
     document.getElementById('dateTitle').textContent = day.toString().padStart(2, '0');
+    window.history.replaceState({}, '', `?year=${year}&month=${month}&day=${day}`);
+    renderEntries();
+  }
 
-    // --- Placeholder: Fetch and Render Entries from Supabase ---
-    // Example: fetch entries where date = `${year}-${month}-${day}`
-
-    // --- Swipe Gesture for Paper Tearing Animation ---
-    let touchstartX = 0;
-    let touchendX = 0;
-    const threshold = 50; // Minimum swipe distance
-
-    document.addEventListener('touchstart', e => {
-      touchstartX = e.changedTouches[0].screenX;
-    });
-    document.addEventListener('touchend', e => {
-      touchendX = e.changedTouches[0].screenX;
-      handleSwipe();
-    });
-
-    function handleSwipe() {
-      if (touchendX < touchstartX - threshold) {
-        // Swipe left: go to next day
-        triggerSwipe('left');
-      } else if (touchendX > touchstartX + threshold) {
-        // Swipe right: go to previous day
-        triggerSwipe('right');
-      }
-    }
-
-    function triggerSwipe(direction) {
-      const container = document.querySelector('.container');
-      if (direction === 'left') {
-        container.classList.add('paper-tear');
-        setTimeout(() => {
-          let current = new Date(year, month - 1, day);
-          current.setDate(current.getDate() + 1);
-          updateDate(current);
-          container.classList.remove('paper-tear');
-        }, 500);
-      } else if (direction === 'right') {
-        container.classList.add('paper-tear-left');
-        setTimeout(() => {
-          let current = new Date(year, month - 1, day);
-          current.setDate(current.getDate() - 1);
-          updateDate(current);
-          container.classList.remove('paper-tear-left');
-        }, 500);
-      }
-    }
-
-    function updateDate(dateObj) {
-      year = dateObj.getFullYear();
-      month = dateObj.getMonth() + 1;
-      day = dateObj.getDate();
-      document.getElementById('dateTitle').textContent = day.toString().padStart(2, '0');
-      // Optionally update the URL parameters and fetch new entries:
-      // window.history.replaceState({}, '', `?year=${year}&month=${month}&day=${day}`);
-      // fetchEntries();
-    }
-
-    // --- Navigation Functions ---
-    function goBack() {
-      window.location.href = 'index.html';
-    }
-    function createNewEntry() {
-      // Redirect to entry page with current date parameters
-      window.location.href = `entry.html?year=${year}&month=${month}&day=${day}`;
-    }
-    function editEntry() {
-      // Redirect to entry page in edit mode for the selected entry
-      window.location.href = `entry.html?year=${year}&month=${month}&day=${day}&edit=true`;
-    }
-
-    // --- Modal Popup Functions ---
-    function openModal(entryTitle) {
-      document.getElementById('modalEntryTitle').textContent = entryTitle;
-      document.getElementById('modalEntryContent').textContent = "Detailed content for " + entryTitle;
-      document.getElementById('entryModal').style.display = 'flex';
-    }
-    function closeModal() {
-      document.getElementById('entryModal').style.display = 'none';
-    }
-
-
-  </script>
+  // Initial Load
+  renderEntries();
+  // Keep existing swipe/navigation/modal functions
+</script>
 </body>
 </html>
