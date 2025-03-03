@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Write It</title>
+  <!-- Include Supabase library from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="supabase.js"></script>
+  <style>
+    /* Global Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Header with Date Title & Return Button */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: #eaeaea;
+      border-bottom: 1px solid #ddd;
+    }
+    .date-title {
+      font-size: 3em;
+      font-weight: bold;
+    }
+    .return-btn {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 15px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .return-btn:hover {
+      background: #2980b9;
+    }
+    /* Entries Tab */
+    .entries-tab {
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .entry-box {
+      background: #ecf0f1;
+      border-radius: 10px;
+      padding: 15px;
+      flex: 1 1 calc(50% - 30px);
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .entry-box:hover {
+      background: #d0dce0;
+      transform: translateY(-3px);
+    }
+    .entry-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    /* Modal Popup for Entry Details */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      position: relative;
+      animation: popIn 0.3s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    .modal-edit, .modal-close {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .modal-edit:hover, .modal-close:hover {
+      background: #2980b9;
+    }
+    /* New Entry Button */
+    .new-entry-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2ecc71;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 2em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .new-entry-btn:hover {
+      background: #27ae60;
+      transform: scale(1.05);
+    }
+    /* Paper Tearing Swipe Animations */
+    .paper-tear {
+      animation: tear 0.5s forwards;
+    }
+    @keyframes tear {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+    .paper-tear-left {
+      animation: tearLeft 0.5s forwards;
+    }
+    @keyframes tearLeft {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-100%); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header: Date Display & Return Button -->
+    <header>
+      <div class="date-title" id="dateTitle">01</div>
+      <button class="return-btn" onclick="goBack()">Return</button>
+    </header>
+    <!-- Entries Tab: List of Diary Entries for the Date -->
+    <div class="entries-tab" id="entriesTab">
+      <!-- Example entry boxes; these should be populated dynamically from Supabase -->
+      <div class="entry-box" onclick="openModal('Sample Entry 1')">
+        <div class="entry-title">Sample Entry 1</div>
+      </div>
+      <div class="entry-box" onclick="openModal('Sample Entry 2')">
+        <div class="entry-title">Sample Entry 2</div>
+      </div>
+      <!-- Additional entry boxes go here -->
+    </div>
+  </div>
+
+  <!-- Modal Popup for Viewing Entry Details -->
+  <div class="modal" id="entryModal">
+    <div class="modal-content">
+      <div class="modal-buttons">
+        <button class="modal-edit" onclick="editEntry()">Edit</button>
+        <button class="modal-close" onclick="closeModal()">X</button>
+      </div>
+      <h2 id="modalEntryTitle">Entry Title</h2>
+      <p id="modalEntryContent">Detailed entry content will be displayed here...</p>
+    </div>
+  </div>
+
+  <!-- New Entry Button -->
+  <button class="new-entry-btn" onclick="createNewEntry()">+</button>
+
+  <script>
+    // --- Date Parsing & Display ---
+    // Example: date.html?year=2025&month=07&day=15
+    const urlParams = new URLSearchParams(window.location.search);
+    let year = urlParams.get('year') || new Date().getFullYear();
+    let month = urlParams.get('month') || (new Date().getMonth() + 1);
+    let day = urlParams.get('day') || new Date().getDate();
+
+    // Display the day as a big, aesthetic number
+    document.getElementById('dateTitle').textContent = day.toString().padStart(2, '0');
+
+    // --- Placeholder: Fetch and Render Entries from Supabase ---
+    // Example: fetch entries where date = `${year}-${month}-${day}`
+
+    // --- Swipe Gesture for Paper Tearing Animation ---
+    let touchstartX = 0;
+    let touchendX = 0;
+    const threshold = 50; // Minimum swipe distance
+
+    document.addEventListener('touchstart', e => {
+      touchstartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', e => {
+      touchendX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchendX < touchstartX - threshold) {
+        // Swipe left: go to next day
+        triggerSwipe('left');
+      } else if (touchendX > touchstartX + threshold) {
+        // Swipe right: go to previous day
+        triggerSwipe('right');
+      }
+    }
+
+    function triggerSwipe(direction) {
+      const container = document.querySelector('.container');
+      if (direction === 'left') {
+        container.classList.add('paper-tear');
+        setTimeout(() => {
+          let current = new Date(year, month - 1, day);
+          current.setDate(current.getDate() + 1);
+          updateDate(current);
+          container.classList.remove('paper-tear');
+        }, 500);
+      } else if (direction === 'right') {
+        container.classList.add('paper-tear-left');
+        setTimeout(() => {
+          let current = new Date(year, month - 1, day);
+          current.setDate(current.getDate() - 1);
+          updateDate(current);
+          container.classList.remove('paper-tear-left');
+        }, 500);
+      }
+    }
+
+    function updateDate(dateObj) {
+      year = dateObj.getFullYear();
+      month = dateObj.getMonth() + 1;
+      day = dateObj.getDate();
+      document.getElementById('dateTitle').textContent = day.toString().padStart(2, '0');
+      // Optionally update the URL parameters and fetch new entries:
+      // window.history.replaceState({}, '', `?year=${year}&month=${month}&day=${day}`);
+      // fetchEntries();
+    }
+
+    // --- Navigation Functions ---
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+    function createNewEntry() {
+      // Redirect to entry page with current date parameters
+      window.location.href = `entry.html?year=${year}&month=${month}&day=${day}`;
+    }
+    function editEntry() {
+      // Redirect to entry page in edit mode for the selected entry
+      window.location.href = `entry.html?year=${year}&month=${month}&day=${day}&edit=true`;
+    }
+
+    // --- Modal Popup Functions ---
+    function openModal(entryTitle) {
+      document.getElementById('modalEntryTitle').textContent = entryTitle;
+      document.getElementById('modalEntryContent').textContent = "Detailed content for " + entryTitle;
+      document.getElementById('entryModal').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('entryModal').style.display = 'none';
+    }
+
+
+  </script>
+</body>
+</html>

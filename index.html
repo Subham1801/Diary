@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Write It</title>
+  <!-- Import a stylish, handwritten font -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <!-- Include Supabase library from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="supabase.js"></script>
+  <style>
+    /* Global Reset & Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    .title-container {
+      text-align: center;
+      padding: 0 20px;
+    }
+    .title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 4rem;
+      color: #f9f9f9; /* Barbie-like pink */
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid rgba(255,105,180,0.75);
+      width: 0;
+      /* Handwriting (typewriter) animation */
+      animation: handwriting 3s steps(15, end) forwards;
+    }
+    @keyframes handwriting {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .title {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="title-container">
+    <div class="title">Write It</div>
+  </div>
+  <script>
+    // After 4 seconds, redirect to the main interface page (e.g., index.html)
+    setTimeout(() => {
+      window.location.href = 'index1.html';
+    }, 4000);
+  </script>
+</body>
+</html>

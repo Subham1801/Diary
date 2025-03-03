@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Write It</title>
+  <!-- Include Supabase library from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="supabase.js"></script>
+
+  <style>
+    /* Global Reset & Base Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      background: #f0f2f5; 
+      color: #333; 
+      overflow-x: hidden; 
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      padding-bottom: 80px;
+    }
+    /* Header with Return & Action Buttons */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #e8f0fe;
+      padding: 15px 20px;
+      border-bottom: 1px solid #d1d9e6;
+    }
+    .header .return-btn {
+      background: #3498db;
+      border: none;
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .header .return-btn:hover { 
+      background: #2980b9; 
+    }
+    .header .title {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #333;
+    }
+    .header .action-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .header .action-btns button {
+      background: #2ecc71;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .header .action-btns button:hover {
+      transform: scale(1.05);
+      background: #27ae60;
+    }
+    .header .action-btns .delete-btn {
+      background: #e74c3c;
+    }
+    .header .action-btns .delete-btn:hover { 
+      background: #c0392b; 
+    }
+    .header .action-btns .describe-btn {
+      background: #9b59b6;
+    }
+    .header .action-btns .describe-btn:hover { 
+      background: #8e44ad; 
+    }
+    /* Form Styles */
+    .form-container {
+      padding: 20px;
+    }
+    .form-container label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .form-container input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 1em;
+      transition: border 0.3s;
+    }
+    .form-container input[type="text"]:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    .separator {
+      height: 2px;
+      background: #e8e8e8;
+      margin-bottom: 20px;
+      border-radius: 2px;
+    }
+    .form-container textarea {
+      width: 100%;
+      height: 300px;
+      padding: 15px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      transition: border 0.3s;
+    }
+    .form-container textarea:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    /* Modal Styles for Emoji Input */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      animation: popIn 0.4s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1.2em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .modal-content .modal-btns {
+      display: flex;
+      justify-content: space-around;
+    }
+    .modal-content .modal-btns button {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+      color: #fff;
+    }
+    .modal-content .modal-btns .save-emoji-btn {
+      background: #2ecc71;
+    }
+    .modal-content .modal-btns .cancel-emoji-btn {
+      background: #e74c3c;
+    }
+    .modal-content .modal-btns button:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header: Return & Action Buttons -->
+    <div class="header">
+      <button class="return-btn" onclick="goBack()">Return</button>
+      <div class="title" id="pageTitle">New Entry</div>
+      <div class="action-btns">
+        <button class="describe-btn" onclick="openEmojiModal()">Describe Your Day</button>
+        <button class="delete-btn" id="deleteBtn" onclick="deleteEntry()">Delete</button>
+        <button class="save-btn" onclick="saveEntry()">Save</button>
+      </div>
+    </div>
+    <!-- Main Form for Entry -->
+    <div class="form-container">
+      <label for="entryTitle">Enter Title</label>
+      <input type="text" id="entryTitle" placeholder="Your entry title..." />
+      <div class="separator"></div>
+      <label for="entryContent">Your Entry</label>
+      <textarea id="entryContent" placeholder="Write your thoughts here..."></textarea>
+    </div>
+  </div>
+  
+  <!-- Modal for Emoji Input -->
+  <div class="modal" id="emojiModal">
+    <div class="modal-content">
+      <h2>Describe Your Day</h2>
+      <p>Please enter 5 emojis to describe your day:</p>
+      <input type="text" id="emojiInput" placeholder="😀 😎 😢 ..." maxlength="10" />
+      <div class="modal-btns">
+        <button class="save-emoji-btn" onclick="saveEmojis()">Save</button>
+        <button class="cancel-emoji-btn" onclick="closeEmojiModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+ // --- URL Parameters ---
+    const urlParams = new URLSearchParams(window.location.search);
+    // URL format: entry.html?year=2025&month=07&day=15 or for editing: entry.html?year=2025&month=07&day=15&id=ENTRY_ID
+    const entryId = urlParams.get('id');
+    const year = urlParams.get('year');
+    const month = urlParams.get('month');
+    const day = urlParams.get('day');
+    const isEditMode = entryId !== null; // If there's an entry id, it's edit mode
+
+    // Set page title based on mode
+    document.getElementById('pageTitle').textContent = isEditMode ? "Edit Entry" : "";
+
+    // Hide Delete button if it's a new entry
+    if (!isEditMode) {
+      document.getElementById('deleteBtn').style.display = 'none';
+    }
+
+    // Placeholder entry data
+    let entryData = { title: "", content: "", emojis: "" };
+
+    // If in edit mode, load existing entry data (using placeholder values for demonstration)
+    if (isEditMode) {
+      // Replace with actual Supabase query to fetch the entry using entryId
+      entryData = {
+        title: "Sample Diary Title",
+        content: "This is a sample diary entry content for editing.",
+        emojis: ""
+      };
+      document.getElementById('entryTitle').value = entryData.title;
+      document.getElementById('entryContent').value = entryData.content;
+    }
+
+    // --- Button Functions ---
+    function goBack() {
+      // Return to date page with the same parameters
+      window.location.href = `date.html?year=${year}&month=${month}&day=${day}`;
+    }
+
+    function saveEntry() {
+      const title = document.getElementById('entryTitle').value.trim();
+      const content = document.getElementById('entryContent').value.trim();
+      const emojis = entryData.emojis || "";
+
+      if (!title || !content) {
+        alert("Please fill out both the title and the content.");
+        return;
+      }
+
+      if (isEditMode) {
+        // Update the existing entry in Supabase (placeholder code)
+        // Example:
+        // supabase.from('diary_entries').update({ title, content, emojis }).eq('id', entryId)
+        //   .then(response => { ... })
+        //   .catch(error => { console.error(error); });
+        alert("Entry updated successfully!");
+      } else {
+        // Insert a new entry into Supabase (placeholder code)
+        // Example:
+        // supabase.from('diary_entries').insert({ title, content, emojis, date: `${year}-${month}-${day}` })
+        //   .then(response => { ... })
+        //   .catch(error => { console.error(error); });
+        alert("Entry created successfully!");
+      }
+      goBack();
+    }
+
+    function deleteEntry() {
+      if (confirm("Are you sure you want to delete this entry?")) {
+        // Delete the entry in Supabase (placeholder code)
+        // Example:
+        // supabase.from('diary_entries').delete().eq('id', entryId)
+        //   .then(response => { ... })
+        //   .catch(error => { console.error(error); });
+        alert("Entry deleted successfully!");
+        goBack();
+      }
+    }
+
+    // --- Emoji Modal Functions ---
+    function openEmojiModal() {
+      document.getElementById('emojiModal').style.display = 'flex';
+    }
+    function closeEmojiModal() {
+      document.getElementById('emojiModal').style.display = 'none';
+    }
+    function saveEmojis() {
+      const emojiInput = document.getElementById('emojiInput').value.trim();
+      // Optionally, add validation for exactly 5 emojis if needed
+      entryData.emojis = emojiInput;
+      alert("Emojis saved!");
+      closeEmojiModal();
+    }
+  </script>
+</body>
+</html>
